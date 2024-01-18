@@ -18,9 +18,9 @@ public class CustomerDao {
 	        }
 
 	        // Establish a database connection
-	        String url = "jdbc:mysql://137.59.52.212:3306/philm_cgi";
-	        String username = "admin";
-	        String password = "30yca@Oms#123";
+	        String url = "jdbc:mysql://localhost:3306/test";
+	        String username = "root";
+	        String password = "root";
 	        return DriverManager.getConnection(url, username, password);
 	    } catch (SQLException e) {
 	        // Handle any SQL exceptions that may occur during connection
