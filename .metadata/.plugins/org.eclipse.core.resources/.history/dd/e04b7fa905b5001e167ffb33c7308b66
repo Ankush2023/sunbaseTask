@@ -1,0 +1,5 @@
+package com.sunbase.customer.dao;
+
+public class CustomerDao {
+
+}

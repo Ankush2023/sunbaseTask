@@ -1,0 +1,278 @@
+package com.sunbase.customer.web;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.List;
+
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import com.sunbase.customer.dao.CustomerDao;
+import com.sunbase.customer.model.Customer;
+import com.sunbase.customer.model.JwtUtils;
+
+/**
+ * Servlet implementation class CustomerServlet
+ */
+@WebServlet("/")
+public class CustomerServlet extends HttpServlet {
+	private static final long serialVersionUID = 1L;
+      private CustomerDao customerdao; 
+ 
+	
+	
+	
+	
+	/**
+     * @see HttpServlet#HttpServlet()
+     */
+    public CustomerServlet() {
+
+    this.customerdao=new CustomerDao();
+    }
+
+	/**
+	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
+	 */
+	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+String action=request.getServletPath();
+switch(action) {
+case "/new":
+	showNewForm(request, response);
+	break;
+case "/insert":
+	inserCustomer(request, response);
+	break;
+case "/delete":
+	deleteCustomer(request, response);
+	break;
+case "/edit":
+	showEditForm(request, response);
+	break;
+case "/update":
+	updateCustomer(request, response);
+	break;
+case "/veiw":
+	veiwCustomer(request, response);
+	break;
+	
+case "/list":
+	listCustomer(request, response);
+	break;
+case "/sync":
+	try {
+		apicall(request, response);
+	} catch (IOException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	} catch (JSONException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}
+	break;
+case "/login":
+	loginCustomer(request, response);
+	break;
+default:
+showloginForm(request, response);
+}
+	}
+
+	private void apicall(HttpServletRequest request, HttpServletResponse response) throws IOException, JSONException {
+		 String apiUrl = "https://qa.sunbasedata.com/sunbase/portal/api/assignment_auth.jsp";
+	     String requestBody = "{\r\n"
+	     		+ "\"login_id\" : \"test@sunbasedata.com\",\r\n"
+	     		+ "\"password\" :\"Test@123\"\r\n"
+	     		+ "}";  
+		URL url = new URL(apiUrl);
+	        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+
+	        // Set the request method to POST (or GET, PUT, etc.)
+	        connection.setRequestMethod("POST");
+
+	        // Set other necessary headers
+
+	        // Enable input/output streams
+	        connection.setDoOutput(true);
+	        connection.setDoInput(true);
+
+	        // Write the request body
+	        connection.getOutputStream().write(requestBody.getBytes("UTF-8"));
+
+	        // Get the API response
+	        BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+	        StringBuilder response1 = new StringBuilder();
+	        String line;
+
+	        while ((line = reader.readLine()) != null) {
+	            response1.append(line);
+	        }
+
+	        // Close resources
+	        reader.close();
+	        connection.disconnect();
+	     // Parse JSON string
+	        JSONObject json = new JSONObject(response1.toString());
+
+	        // Extract the value of the 'access_token'
+	        String accessToken = json.getString("access_token");
+	       
+	        try {
+	      
+
+	            // API URL with parameter
+	           String apiUrl1 = "https://qa.sunbasedata.com/sunbase/portal/api/assignment.jsp?cmd=" + "get_customer_list";
+
+	          
+
+
+	            // Set up the HTTP connection
+	            URL url1 = new URL(apiUrl1);
+	            HttpURLConnection connection1 = (HttpURLConnection) url1.openConnection();
+
+
+	            // Set authentication token
+	            connection.setRequestProperty("Authorization", "Bearer " + accessToken);
+
+	            // Set other necessary headers
+
+	            // Get the API response
+	            BufferedReader reader1 = new BufferedReader(new InputStreamReader(connection1.getInputStream()));
+	            StringBuilder response2 = new StringBuilder();
+	            String line1;
+
+	            while ((line1 = reader1.readLine()) != null) {
+	                response2.append(line);
+	            }
+
+	            // Close resources
+	            reader1.close();
+	            connection1.disconnect();
+
+	            // Process the API response as needed
+	            System.out.println("API Response: " + response1.toString());
+	        } catch (Exception e) {
+	            e.printStackTrace();
+	            // Handle exceptions
+	            System.out.println("Error making API call: " + e.getMessage());
+	        }
+	        
+		}
+
+	private void loginCustomer(HttpServletRequest request, HttpServletResponse response) throws IOException {
+	    // Retrieve username and password from the request
+        String username = request.getParameter("username");
+        String password = request.getParameter("password");
+
+        // Validate the username and password (replace this with your authentication logic)
+        if (customerdao.checkUserNamePasswordExist(username, password)) {
+            // Authentication successful
+
+            // Generate JWT token
+            String jwtToken = JwtUtils.generateToken(username);
+
+            // Add the token to the response or use it as needed
+            response.setHeader("Authorization", "Bearer " + jwtToken);
+
+            // Redirect to the dashboard
+            response.sendRedirect("list-customer.jsp");
+        } else {
+            // Authentication failed
+            response.sendRedirect("login.jsp?error=true");
+        }
+    }
+		
+	
+
+	private void showloginForm(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		RequestDispatcher dispatcher=request.getRequestDispatcher("login.jsp");
+		dispatcher.forward(request, response);
+		
+	}
+
+	/**
+	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
+	 */
+	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		doGet(request, response);
+	}
+	
+	private void showNewForm(HttpServletRequest request,HttpServletResponse response) throws ServletException, IOException
+	{
+		RequestDispatcher dispatcher=request.getRequestDispatcher("customer-form.jsp");
+		dispatcher.forward(request, response);
+	}
+	private void showEditForm(HttpServletRequest request,HttpServletResponse response) throws ServletException, IOException
+	{
+		int id=Integer.parseInt(request.getParameter("id"));
+		Customer existCustomer=customerdao.getCustomerById(id);
+		RequestDispatcher dispatcher=request.getRequestDispatcher("customer-form.jsp");
+		request.setAttribute("customer", existCustomer);
+		dispatcher.forward(request, response);
+	}
+	private void deleteCustomer(HttpServletRequest request,HttpServletResponse response) throws ServletException, IOException
+	{
+		int id=Integer.parseInt(request.getParameter("id"));
+		customerdao.deleteCustomer(id);
+		response.sendRedirect("list");
+	}
+	private void inserCustomer(HttpServletRequest request,HttpServletResponse response) throws IOException {
+		 String firstName=request.getParameter("firstName");
+	     String lastName=request.getParameter("lastName");
+	     String street=request.getParameter("street");
+	     String address=request.getParameter("address");
+	     String state=request.getParameter("state");
+	     String city=request.getParameter("city");
+	     String email=request.getParameter("email");
+	     String password=request.getParameter("password");
+	     String phone=request.getParameter("phone");
+	     Customer customer=new Customer(firstName, lastName, street, address, state, city, email,password, phone);
+	     customerdao.insertCustomer(customer);
+	     response.sendRedirect("list");
+
+	}
+	
+	private void updateCustomer(HttpServletRequest request,HttpServletResponse response) throws IOException {
+		int id=Integer.parseInt(request.getParameter("id"));
+         String firstName=request.getParameter("firstName");
+	     String lastName=request.getParameter("lastName");
+	     String street=request.getParameter("street");
+	     String address=request.getParameter("address");
+	     String state=request.getParameter("state");
+	     String city=request.getParameter("city");
+	     String email=request.getParameter("email");
+	     String password=request.getParameter("password");
+	     String phone=request.getParameter("phone");
+	     Customer customer=new Customer(firstName, lastName, street, address, state, city, email,password, phone);
+	     customerdao.updateCustomer(customer);
+	     response.sendRedirect("list");
+
+	}
+	private void listCustomer(HttpServletRequest request,HttpServletResponse response) throws IOException, ServletException {
+		 String search = request.getParameter("search");
+	     String searchBy = request.getParameter("searchBy");
+	List<Customer> listCustomer=customerdao.getAllCustomers(search,searchBy);
+	request.setAttribute("listcustomer", listCustomer);
+	RequestDispatcher dispatcher=request.getRequestDispatcher("list-customer.jsp");
+	dispatcher.forward(request, response);
+
+	}
+	private void veiwCustomer(HttpServletRequest request,HttpServletResponse response) throws IOException, ServletException {
+	int id=Integer.parseInt(request.getParameter("id"));
+	Customer customer=customerdao.getCustomerById(id);
+	request.setAttribute("customer", customer);
+	RequestDispatcher dispatcher=request.getRequestDispatcher("customer_by_id.jsp");
+	dispatcher.forward(request, response);
+
+	}
+}

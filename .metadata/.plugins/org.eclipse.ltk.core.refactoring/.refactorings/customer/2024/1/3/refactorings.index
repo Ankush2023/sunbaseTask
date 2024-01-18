@@ -1,0 +1,12 @@
+1705471066790	Rename package 'com.sunbase.customer'
+1705471693889	Encapsulate field 'id'
+1705471704206	Encapsulate field 'firstName'
+1705471716182	Encapsulate field 'lastName'
+1705471724331	Encapsulate field 'street'
+1705471730639	Encapsulate field 'address'
+1705471736895	Encapsulate field 'state'
+1705471744645	Encapsulate field 'city'
+1705471750525	Encapsulate field 'email'
+1705471756785	Encapsulate field 'phone'
+1705472261906	Rename type 'customer'
+1705485691379	Delete element

@@ -1,0 +1,158 @@
+package com.sunbase.customer.dao;
+
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.sunbase.customer.model.Customer;
+
+public class CustomerDao {
+
+	private Connection getConnection() {
+	    try {
+	        // Your existing code
+	        String url = "jdbc:mysql://localhost:3306/test?useSSL=false&serverTimezone=UTC";
+	        String username = "root";
+	        String password = "oms123";
+	        return DriverManager.getConnection(url, username, password);
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	        throw new RuntimeException("Failed to connect to the database", e);
+	    }
+	}
+
+
+    public void insertCustomer(Customer customer) {
+        try (Connection connection = getConnection();
+             PreparedStatement statement = connection.prepareStatement(
+                     "INSERT INTO customer (first_name, last_name, street, address, state, city, email, phone) " +
+                             "VALUES (?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS)) {
+
+            statement.setString(1, customer.getFirstName());
+            statement.setString(2, customer.getLastName());
+            statement.setString(3, customer.getStreet());
+            statement.setString(4, customer.getAddress());
+            statement.setString(5, customer.getState());
+            statement.setString(6, customer.getCity());
+            statement.setString(7, customer.getEmail());
+            statement.setString(8, customer.getPhone());
+
+            int affectedRows = statement.executeUpdate();
+
+            if (affectedRows == 0) {
+                throw new SQLException("Creating customer failed, no rows affected.");
+            }
+
+            try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    customer.setId(generatedKeys.getInt(1));
+                } else {
+                    throw new SQLException("Creating customer failed, no ID obtained.");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public List<Customer> getAllCustomers() {
+        List<Customer> customers = new ArrayList<>();
+
+        try (Connection connection = getConnection();
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery("SELECT * FROM customer")) {
+
+            while (resultSet.next()) {
+                Customer customer = new Customer();
+                customer.setId(resultSet.getInt("id"));
+                customer.setFirstName(resultSet.getString("first_name"));
+                customer.setLastName(resultSet.getString("last_name"));
+                customer.setStreet(resultSet.getString("street"));
+                customer.setAddress(resultSet.getString("address"));
+                customer.setState(resultSet.getString("state"));
+                customer.setCity(resultSet.getString("city"));
+                customer.setEmail(resultSet.getString("email"));
+                customer.setPhone(resultSet.getString("phone"));
+                customers.add(customer);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return customers;
+    }
+
+    public Customer getCustomerById(int customerId) {
+        Customer customer = null;
+
+        try (Connection connection = getConnection();
+             PreparedStatement statement = connection.prepareStatement("SELECT * FROM customer WHERE id = ?")) {
+
+            statement.setInt(1, customerId);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    customer = new Customer();
+                    customer.setId(resultSet.getInt("id"));
+                    customer.setFirstName(resultSet.getString("first_name"));
+                    customer.setLastName(resultSet.getString("last_name"));
+                    customer.setStreet(resultSet.getString("street"));
+                    customer.setAddress(resultSet.getString("address"));
+                    customer.setState(resultSet.getString("state"));
+                    customer.setCity(resultSet.getString("city"));
+                    customer.setEmail(resultSet.getString("email"));
+                    customer.setPhone(resultSet.getString("phone"));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return customer;
+    }
+
+    public void updateCustomer(Customer customer) {
+        try (Connection connection = getConnection();
+             PreparedStatement statement = connection.prepareStatement(
+                     "UPDATE customer SET first_name=?, last_name=?, street=?, address=?, state=?, city=?, email=?, phone=? " +
+                             "WHERE id=?")) {
+
+            statement.setString(1, customer.getFirstName());
+            statement.setString(2, customer.getLastName());
+            statement.setString(3, customer.getStreet());
+            statement.setString(4, customer.getAddress());
+            statement.setString(5, customer.getState());
+            statement.setString(6, customer.getCity());
+            statement.setString(7, customer.getEmail());
+            statement.setString(8, customer.getPhone());
+            statement.setInt(9, customer.getId());
+
+            int affectedRows = statement.executeUpdate();
+
+            if (affectedRows == 0) {
+                throw new SQLException("Updating customer failed, no rows affected.");
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void deleteCustomer(int customerId) {
+        try (Connection connection = getConnection();
+             PreparedStatement statement = connection.prepareStatement("DELETE FROM customer WHERE id=?")) {
+
+            statement.setInt(1, customerId);
+
+            int affectedRows = statement.executeUpdate();
+
+            if (affectedRows == 0) {
+                throw new SQLException("Deleting customer failed, no rows affected.");
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
